@@ -15,9 +15,6 @@ func main() {
 		Handler: routes.Init(),
 	}
 
-	fmt.Println("1")
-	log.Println("1")
-
 	// service connections
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("listen:", err)
