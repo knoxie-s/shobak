@@ -3,6 +3,7 @@ package routes
 import (
 	"math/rand"
 	"net/http"
+	"shobak/models"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -11,14 +12,6 @@ import (
 type UserReq struct {
 	Login    string `json:"name"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type User struct {
-	ID       int64  `json:"id"`
-	Login    string `json:"login"`
-	Email    string `json:"email"`
-	Age      int    `json:"age"`
 	Password string `json:"password"`
 }
 
@@ -32,10 +25,10 @@ type UserResp struct {
 	ID int64 `json:"id"`
 }
 
-var cache = make(map[int64]User, 1000) // "1": User{}
+var cache = make(map[int64]models.User, 1000) // "1": User{}
 
 func CreateUser(c *gin.Context) {
-	var userReq User
+	var userReq models.User
 
 	if err := c.ShouldBindJSON(&userReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "provide valid body request!"})
@@ -44,7 +37,7 @@ func CreateUser(c *gin.Context) {
 
 	id := rand.Int63n(1000)
 
-	user := User{
+	user := models.User{
 		ID:       id,
 		Login:    userReq.Login,
 		Email:    userReq.Email,
@@ -59,7 +52,7 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUserByID(c *gin.Context) {
-	var user User
+	var user models.User
 	if err := c.Bind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "provide valid url params!"})
 	}
@@ -74,7 +67,7 @@ func GetUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "provide valid url params!"})
 	}
 
-	var users []User
+	var users []models.User
 
 	if userFilter.Login != "" {
 		for _, v := range cache {

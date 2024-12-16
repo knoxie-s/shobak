@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"shobak/pkg/setting"
 	"shobak/routes"
 )
 
+func init() {
+	setting.Setup("./config/config.json")
+}
+
 func main() {
-	endPoint := fmt.Sprintf(":%d", 8080)
+	endPoint := fmt.Sprintf(":%d", setting.Config.App.Port)
 
 	server := &http.Server{
 		Addr:    endPoint,
