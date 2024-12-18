@@ -1,9 +1,12 @@
 package routes
 
 import (
-	"math/rand"
+	"fmt"
+	"log"
 	"net/http"
+	"shobak/db"
 	"shobak/models"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -35,29 +38,47 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	id := rand.Int63n(1000)
-
 	user := models.User{
-		ID:       id,
 		Login:    userReq.Login,
 		Email:    userReq.Email,
 		Password: userReq.Password,
 	}
 
-	cache[id] = user
+	var count int64
+	db.GetDB().Model(models.User{}).Where("login = ?", userReq.Login).Count(&count)
+	if count > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": fmt.Sprintf("user %s already exist", userReq.Login)})
+		return
+	}
+
+	if err := db.GetDB().Create(&user).Error; err != nil {
+		log.Printf("error to create user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "internal server error"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": UserResp{
-		ID: id,
+		ID: user.ID,
 	}})
 }
 
 func GetUserByID(c *gin.Context) {
+	idStr := c.Param("id")
+
 	var user models.User
-	if err := c.Bind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "provide valid url params!"})
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		log.Printf("error to parse id: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "internal server error"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "data": cache[user.ID]})
+	if err = db.GetDB().Where("id = ?", id).Find(&user).Error; err != nil {
+		log.Printf("error to get user by id: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "internal server error"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": user})
 }
 
 func GetUser(c *gin.Context) {

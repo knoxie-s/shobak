@@ -46,6 +46,10 @@ func CloseDB() {
 	}
 }
 
+func GetDB() *gorm.DB {
+	return db
+}
+
 func autoMigrate() {
 	for _, model := range []interface{}{
 		(*models.User)(nil),
